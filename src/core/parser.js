@@ -26,6 +26,7 @@ import {
   Cmd, Dict, EOF, isCmd, isDict, isEOF, isName, Name, Ref
 } from './primitives';
 import { CCITTFaxStream } from './ccitt_stream';
+import { computeAdler32 } from '../wasm/pdfjs';
 import { Jbig2Stream } from './jbig2_stream';
 import { JpegStream } from './jpeg_stream';
 import { JpxStream } from './jpx_stream';
@@ -33,22 +34,6 @@ import { MissingDataException } from './core_utils';
 
 const MAX_LENGTH_TO_CACHE = 1000;
 const MAX_ADLER32_LENGTH = 5552;
-
-function computeAdler32(bytes) {
-  const bytesLength = bytes.length;
-  if (typeof PDFJSDev === 'undefined' ||
-      PDFJSDev.test('!PRODUCTION || TESTING')) {
-    assert(bytesLength < MAX_ADLER32_LENGTH,
-           'computeAdler32: Unsupported "bytes" length.');
-  }
-  let a = 1, b = 0;
-  for (let i = 0; i < bytesLength; ++i) {
-    // No modulo required in the loop if `bytesLength < 5552`.
-    a += bytes[i] & 0xFF;
-    b += a;
-  }
-  return ((b % 65521) << 16) | (a % 65521);
-}
 
 class Parser {
   constructor({ lexer, xref, allowStreams = false, recoveryMode = false, }) {
@@ -138,7 +123,7 @@ class Parser {
           // object streams.
           if (isCmd(this.buf2, 'stream')) {
             return (this.allowStreams ?
-                    this.makeStream(dict, cipherTransform) : dict);
+              this.makeStream(dict, cipherTransform) : dict);
           }
           this.shift();
           return dict;
@@ -222,7 +207,7 @@ class Parser {
 
     if (ch === -1) {
       warn('findDefaultInlineStreamEnd: ' +
-           'Reached the end of the stream without finding a valid EI marker');
+        'Reached the end of the stream without finding a valid EI marker');
       if (maybeEIPos) {
         warn('... trying to recover by using the last "EI" occurrence.');
         stream.skip(-(stream.pos - maybeEIPos)); // Reset the stream position.
@@ -270,29 +255,29 @@ class Parser {
         case 0xC1: // SOF1
         case 0xC2: // SOF2
         case 0xC3: // SOF3
-          /* falls through */
+        /* falls through */
         case 0xC5: // SOF5
         case 0xC6: // SOF6
         case 0xC7: // SOF7
-          /* falls through */
+        /* falls through */
         case 0xC9: // SOF9
         case 0xCA: // SOF10
         case 0xCB: // SOF11
-          /* falls through */
+        /* falls through */
         case 0xCD: // SOF13
         case 0xCE: // SOF14
         case 0xCF: // SOF15
-          /* falls through */
+        /* falls through */
         case 0xC4: // DHT
         case 0xCC: // DAC
-          /* falls through */
+        /* falls through */
         case 0xDA: // SOS
         case 0xDB: // DQT
         case 0xDC: // DNL
         case 0xDD: // DRI
         case 0xDE: // DHP
         case 0xDF: // EXP
-          /* falls through */
+        /* falls through */
         case 0xE0: // APP0
         case 0xE1: // APP1
         case 0xE2: // APP2
@@ -309,7 +294,7 @@ class Parser {
         case 0xED: // APP13
         case 0xEE: // APP14
         case 0xEF: // APP15
-          /* falls through */
+        /* falls through */
         case 0xFE: // COM
           // The marker should be followed by the length of the segment.
           markerLength = stream.getUint16();
@@ -330,7 +315,7 @@ class Parser {
     length = stream.pos - startPos;
     if (b === -1) {
       warn('Inline DCTDecode image stream: ' +
-           'EOI marker not found, searching for /EI/ instead.');
+        'EOI marker not found, searching for /EI/ instead.');
       stream.skip(-length); // Reset the stream position.
       return this.findDefaultInlineStreamEnd(stream);
     }
@@ -363,7 +348,7 @@ class Parser {
     length = stream.pos - startPos;
     if (ch === -1) {
       warn('Inline ASCII85Decode image stream: ' +
-           'EOD marker not found, searching for /EI/ instead.');
+        'EOD marker not found, searching for /EI/ instead.');
       stream.skip(-length); // Reset the stream position.
       return this.findDefaultInlineStreamEnd(stream);
     }
@@ -386,7 +371,7 @@ class Parser {
     length = stream.pos - startPos;
     if (ch === -1) {
       warn('Inline ASCIIHexDecode image stream: ' +
-           'EOD marker not found, searching for /EI/ instead.');
+        'EOD marker not found, searching for /EI/ instead.');
       stream.skip(-length); // Reset the stream position.
       return this.findDefaultInlineStreamEnd(stream);
     }
@@ -561,7 +546,7 @@ class Parser {
       const ENDSTREAM_SIGNATURE = new Uint8Array([
         0x65, 0x6E, 0x64, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6D]);
       let actualLength = this._findStreamLength(startPos,
-                                                ENDSTREAM_SIGNATURE);
+        ENDSTREAM_SIGNATURE);
       if (actualLength < 0) {
         // Only allow limited truncation of the endstream signature,
         // to prevent false positives.
@@ -573,7 +558,7 @@ class Parser {
           const TRUNCATED_SIGNATURE = ENDSTREAM_SIGNATURE.slice(0, end);
 
           const maybeLength = this._findStreamLength(startPos,
-                                                     TRUNCATED_SIGNATURE);
+            TRUNCATED_SIGNATURE);
           if (maybeLength >= 0) {
             // Ensure that the byte immediately following the truncated
             // endstream command is a space, to prevent false positives.
@@ -582,7 +567,7 @@ class Parser {
               break;
             }
             info(`Found "${bytesToString(TRUNCATED_SIGNATURE)}" when ` +
-                 'searching for endstream command.');
+              'searching for endstream command.');
             actualLength = maybeLength;
             break;
           }
@@ -616,7 +601,7 @@ class Parser {
     if (isName(filter)) {
       if (Array.isArray(params)) {
         warn('/DecodeParms should not contain an Array, ' +
-             'when /Filter contains a Name.');
+          'when /Filter contains a Name.');
       }
       return this.makeFilter(stream, filter.name, length, params);
     }
@@ -658,7 +643,7 @@ class Parser {
         xrefStreamStats[StreamType.FLATE] = true;
         if (params) {
           return new PredictorStream(new FlateStream(stream, maybeLength),
-                                     maybeLength, params);
+            maybeLength, params);
         }
         return new FlateStream(stream, maybeLength);
       }
@@ -809,7 +794,7 @@ class Lexer {
     }
     if (ch < 0x30 || ch > 0x39) { // '0' - '9'
       if (divideBy === 10 && sign === 0 &&
-          (isSpace(ch) || ch === /* EOF = */ -1)) {
+        (isSpace(ch) || ch === /* EOF = */ -1)) {
         // This is consistent with Adobe Reader (fixes issue9252.pdf).
         warn('Lexer.getNumber - treating a single decimal point as zero.');
         return 0;
@@ -976,7 +961,7 @@ class Lexer {
         ch = this.nextChar();
         if (specialChars[ch]) {
           warn('Lexer_getName: ' +
-               'NUMBER SIGN (#) should be followed by a hexadecimal number.');
+            'NUMBER SIGN (#) should be followed by a hexadecimal number.');
           strBuf.push('#');
           break;
         }
@@ -987,7 +972,7 @@ class Lexer {
           const x2 = toHexDigit(ch);
           if (x2 === -1) {
             warn(`Lexer_getName: Illegal digit (${String.fromCharCode(ch)}) ` +
-                 'in hexadecimal number.');
+              'in hexadecimal number.');
             strBuf.push('#', String.fromCharCode(previousCh));
             if (specialChars[ch]) {
               break;
@@ -1181,7 +1166,7 @@ class Linearization {
         return obj;
       }
       throw new Error(`The "${name}" parameter in the linearization ` +
-                      'dictionary is invalid.');
+        'dictionary is invalid.');
     }
 
     function getHints(linDict) {
@@ -1189,12 +1174,12 @@ class Linearization {
       let hintsLength;
 
       if (Array.isArray(hints) &&
-          ((hintsLength = hints.length) === 2 || hintsLength === 4)) {
+        ((hintsLength = hints.length) === 2 || hintsLength === 4)) {
         for (let index = 0; index < hintsLength; index++) {
           const hint = hints[index];
           if (!(Number.isInteger(hint) && hint > 0)) {
             throw new Error(`Hint (${index}) in the linearization dictionary ` +
-                            'is invalid.');
+              'is invalid.');
           }
         }
         return hints;
@@ -1212,12 +1197,12 @@ class Linearization {
     const linDict = parser.getObj();
     let obj, length;
     if (!(Number.isInteger(obj1) && Number.isInteger(obj2) &&
-          isCmd(obj3, 'obj') && isDict(linDict) &&
-          isNum(obj = linDict.get('Linearized')) && obj > 0)) {
+      isCmd(obj3, 'obj') && isDict(linDict) &&
+      isNum(obj = linDict.get('Linearized')) && obj > 0)) {
       return null; // No valid linearization dictionary found.
     } else if ((length = getInt(linDict, 'L')) !== stream.length) {
       throw new Error('The "L" parameter in the linearization dictionary ' +
-                      'does not equal the stream length.');
+        'does not equal the stream length.');
     }
     return {
       length,
@@ -1227,7 +1212,7 @@ class Linearization {
       numPages: getInt(linDict, 'N'),
       mainXRefEntriesOffset: getInt(linDict, 'T'),
       pageFirst: (linDict.has('P') ?
-                  getInt(linDict, 'P', /* allowZeroValue = */ true) : 0),
+        getInt(linDict, 'P', /* allowZeroValue = */ true) : 0),
     };
   }
 }
