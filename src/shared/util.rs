@@ -48,4 +48,14 @@ mod wasm {
     pub fn verbosity_level() -> u8 {
         super::verbosity_level().to_u8().unwrap()
     }
+
+    #[wasm_bindgen]
+    pub fn warn(msg: &str) {
+        super::warn(msg)
+    }
+
+    #[wasm_bindgen]
+    pub fn info(msg: &str) {
+        super::info(msg)
+    }
 }

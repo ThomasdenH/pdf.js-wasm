@@ -16,3 +16,5 @@ test/pdfs/
 test/resources/
 test/font/*_spec.js
 *~/
+src/wasm/
+pkg/

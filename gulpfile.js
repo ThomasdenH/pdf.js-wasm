@@ -463,7 +463,9 @@ gulp.task('buildnumber', function (done) {
         // Build number is the number of commits since base version
         buildNumber = stdout ? stdout.match(/\n/g).length : 0;
       } else {
-        console.log('This is not a Git repository; using default build number.');
+        console.log(
+          'This is not a Git repository; using default build number.'
+        );
       }
 
       console.log('Extension build number: ' + buildNumber);
@@ -530,20 +532,23 @@ gulp.task('default_preferences-pre', function () {
   };
   var preprocessor2 = require('./external/builder/preprocessor2.js');
   var buildLib = merge([
-    gulp.src([
-      'src/{display,shared}/*.js',
-      '!src/shared/{cffStandardStrings,fonts_utils}.js',
-      'src/pdf.js',
-    ], { base: 'src/', }),
-    gulp.src([
-      'web/*.js',
-      '!web/{app,pdfjs,preferences,viewer}.js',
-    ], { base: '.', }),
-  ]).pipe(transform('utf8', preprocess))
+    merge([
+      gulp.src([
+        'src/{display,shared}/*.js',
+        '!src/shared/{cffStandardStrings,fonts_utils}.js',
+        'src/pdf.js',
+      ], { base: 'src/', }),
+      gulp.src([
+        'web/*.js',
+        '!web/{app,pdfjs,preferences,viewer}.js',
+      ], { base: '.', }),
+    ]).pipe(transform('utf8', preprocess)),
+    gulp.src('src/wasm/*.js', { base: 'src/', })
+  ])
     .pipe(gulp.dest(DEFAULT_PREFERENCES_DIR + 'lib/'));
   return merge([
     buildLib,
-    gulp.src('external/{streams,url}/*.js', { base: '.', })
+    gulp.src('external/{streams,url,fast-text-encoding}/*.js', { base: '.', })
       .pipe(gulp.dest(DEFAULT_PREFERENCES_DIR)),
   ]);
 });
@@ -762,7 +767,9 @@ gulp.task('minified-pre', gulp.series('buildnumber', 'default_preferences',
     return merge([
       createBundle(defines).pipe(gulp.dest(MINIFIED_DIR + 'build')),
       createWebBundle(defines).pipe(gulp.dest(MINIFIED_DIR + 'web')),
-      createImageDecodersBundle(builder.merge(defines, { IMAGE_DECODERS: true, }))
+      createImageDecodersBundle(
+        builder.merge(defines, { IMAGE_DECODERS: true, })
+      )
         .pipe(gulp.dest(MINIFIED_DIR + 'image_decoders')),
       gulp.src(COMMON_WEB_FILES, { base: 'web/', })
         .pipe(gulp.dest(MINIFIED_DIR + 'web')),
@@ -851,7 +858,10 @@ gulp.task('mozcentral-pre', gulp.series('buildnumber', 'default_preferences',
   'locale', function () {
     console.log();
     console.log('### Building mozilla-central extension');
-    var defines = builder.merge(DEFINES, { MOZCENTRAL: true, SKIP_BABEL: true, });
+    var defines = builder.merge(
+      DEFINES,
+      { MOZCENTRAL: true, SKIP_BABEL: true, }
+    );
 
     var MOZCENTRAL_DIR = BUILD_DIR + 'mozcentral/',
       MOZCENTRAL_EXTENSION_DIR = MOZCENTRAL_DIR + 'browser/extensions/pdfjs/',
@@ -914,7 +924,8 @@ gulp.task('chromium-pre', gulp.series('buildnumber', 'default_preferences',
 
     return merge([
       createBundle(defines).pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'build')),
-      createWebBundle(defines).pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
+      createWebBundle(defines)
+        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
       gulp.src(COMMON_WEB_FILES, { base: 'web/', })
         .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
 
@@ -1025,18 +1036,21 @@ gulp.task('lib', gulp.series('buildnumber', 'default_preferences', function () {
     fs.readFileSync('./src/license_header_libre.js').toString();
   var preprocessor2 = require('./external/builder/preprocessor2.js');
   var buildLib = merge([
-    gulp.src([
-      'src/{core,display,shared}/*.js',
-      '!src/shared/{cffStandardStrings,fonts_utils}.js',
-      'src/{pdf,pdf.worker}.js',
-    ], { base: 'src/', }),
-    gulp.src([
-      'examples/node/domstubs.js',
-      'web/*.js',
-      '!web/{pdfjs,viewer}.js',
-    ], { base: '.', }),
-    gulp.src('test/unit/*.js', { base: '.', }),
-  ]).pipe(transform('utf8', preprocess))
+    merge([
+      gulp.src([
+        'src/{core,display,shared}/*.js',
+        '!src/shared/{cffStandardStrings,fonts_utils}.js',
+        'src/{pdf,pdf.worker}.js',
+      ], { base: 'src/', }),
+      gulp.src([
+        'examples/node/domstubs.js',
+        'web/*.js',
+        '!web/{pdfjs,viewer}.js',
+      ], { base: '.', }),
+      gulp.src('test/unit/*.js', { base: '.', }),
+    ]).pipe(transform('utf8', preprocess)),
+    gulp.src('src/wasm/*.js', { base: 'src/', })
+  ])
     .pipe(gulp.dest('build/lib/'));
   return merge([
     buildLib,
@@ -1044,6 +1058,8 @@ gulp.task('lib', gulp.series('buildnumber', 'default_preferences', function () {
       .pipe(gulp.dest('build/')),
     gulp.src('external/url/url-lib.js', { base: '.', })
       .pipe(gulp.dest('build/')),
+    gulp.src('external/fast-text-encoding/text.min.js', { base: '.', })
+      .pipe(gulp.dest('build/'))
   ]);
 }));
 
@@ -1545,8 +1561,8 @@ gulp.task('wasm', function (done) {
   ])
     .pipe(
       replace(
-        /const TextDecoder = .*\n/g,
-        'require(\'fast-text-encoding\');\n'
+        /const { TextDecoder } = .*\n/g,
+        'require(\'../../external/fast-text-encoding/text.min.js\');\n'
       )
     )
     .pipe(gulp.dest(WASM_DEST_DIR));

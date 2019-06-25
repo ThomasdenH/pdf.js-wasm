@@ -231,8 +231,8 @@ function bidi(str, startLevel, vertical) {
       types[i] = 'EN';
     }
     if (types[i] === 'CS' &&
-        (types[i - 1] === 'EN' || types[i - 1] === 'AN') &&
-        types[i + 1] === types[i - 1]) {
+      (types[i - 1] === 'EN' || types[i - 1] === 'AN') &&
+      types[i + 1] === types[i - 1]) {
       types[i] = types[i - 1];
     }
   }
