@@ -70,15 +70,84 @@ fn test_to_roman_numerals_lowercase() {
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::*;
+    use js_sys::{Error, Number};
     use wasm_bindgen::prelude::*;
+    use wasm_bindgen_test::*;
 
     #[wasm_bindgen(js_name = toRomanNumerals)]
-    pub fn to_roman_numerals(number: u32, lowercase: Option<bool>) -> String {
+    pub fn to_roman_numerals(value: JsValue, lowercase: Option<bool>) -> Result<String, JsValue> {
+        let number = Some(value)
+            .filter(Number::is_integer)
+            .and_then(|f| f.as_f64())
+            .filter(|f| *f > 0.0)
+            .map(|f| f as u32)
+            .ok_or(JsValue::from(Error::new(
+                "The number should be a positive integer.",
+            )))?;
+
         let casing = if lowercase.unwrap_or(false) {
             Casing::Lower
         } else {
             Casing::Upper
         };
-        super::to_roman_numerals(number, casing)
+        Ok(super::to_roman_numerals(number, casing))
+    }
+
+    #[wasm_bindgen_test]
+    fn test_to_roman_numerals_uppercase() {
+        assert_eq!(to_roman_numerals(1.into(), None), Ok("I".to_string()));
+        assert_eq!(to_roman_numerals(6.into(), None), Ok("VI".to_string()));
+        assert_eq!(to_roman_numerals(7.into(), None), Ok("VII".to_string()));
+        assert_eq!(to_roman_numerals(8.into(), None), Ok("VIII".to_string()));
+        assert_eq!(to_roman_numerals(10.into(), None), Ok("X".to_string()));
+        assert_eq!(to_roman_numerals(40.into(), None), Ok("XL".to_string()));
+        assert_eq!(to_roman_numerals(100.into(), None), Ok("C".to_string()));
+        assert_eq!(to_roman_numerals(500.into(), None), Ok("D".to_string()));
+        assert_eq!(to_roman_numerals(1000.into(), None), Ok("M".to_string()));
+        assert_eq!(
+            to_roman_numerals(2019.into(), None),
+            Ok("MMXIX".to_string())
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn test_to_roman_numerals_lowercase() {
+        assert_eq!(to_roman_numerals(1.into(), Some(true)), Ok("i".to_string()));
+        assert_eq!(
+            to_roman_numerals(6.into(), Some(true)),
+            Ok("vi".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(7.into(), Some(true)),
+            Ok("vii".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(8.into(), Some(true)),
+            Ok("viii".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(10.into(), Some(true)),
+            Ok("x".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(40.into(), Some(true)),
+            Ok("xl".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(100.into(), Some(true)),
+            Ok("c".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(500.into(), Some(true)),
+            Ok("d".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(1000.into(), Some(true)),
+            Ok("m".to_string())
+        );
+        assert_eq!(
+            to_roman_numerals(2019.into(), Some(true)),
+            Ok("mmxix".to_string())
+        );
     }
 }
