@@ -67,7 +67,7 @@ fn test_to_roman_numerals_lowercase() {
     assert_eq!(to_roman_numerals(2019, Casing::Lower), "mmxix");
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::*;
     use wasm_bindgen::prelude::*;

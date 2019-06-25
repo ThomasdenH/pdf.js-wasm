@@ -20,9 +20,10 @@ fn test_compute_adler_32() {
     assert_eq!(compute_adler_32("Wikipedia".as_bytes()), 0x11E60398);
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(target_arch = "wasm32")]
 mod wasm {
     use wasm_bindgen::prelude::*;
+
     #[wasm_bindgen(js_name = computeAdler32)]
     pub fn compute_adler_32(bytes: &[u8]) -> u32 {
         super::compute_adler_32(bytes)

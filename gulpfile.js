@@ -1534,8 +1534,7 @@ gulp.task('wasm', function (done) {
     [
       'build',
       '--out-dir', WASM_PACK_DEST,
-      '--target', 'nodejs',
-      '--features', 'wasm'
+      '--target', 'nodejs'
     ],
     { stdio: 'inherit', }
   );

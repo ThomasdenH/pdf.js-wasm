@@ -16,6 +16,7 @@
 import './compatibility';
 import { ReadableStream } from './streams_polyfill';
 import { URL } from './url_polyfill';
+import { warn } from '../wasm/pdfjs';
 
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 const FONT_IDENTITY_MATRIX = [0.001, 0, 0, 0.001, 0, 0];
@@ -279,34 +280,6 @@ const PasswordResponses = {
   INCORRECT_PASSWORD: 2,
 };
 
-let verbosity = VerbosityLevel.WARNINGS;
-
-function setVerbosityLevel(level) {
-  if (Number.isInteger(level)) {
-    verbosity = level;
-  }
-}
-
-function getVerbosityLevel() {
-  return verbosity;
-}
-
-// A notice for devs. These are good for things that are helpful to devs, such
-// as warning that Workers were disabled, which is important to devs but not
-// end users.
-function info(msg) {
-  if (verbosity >= VerbosityLevel.INFOS) {
-    console.log('Info: ' + msg);
-  }
-}
-
-// Non-fatal warnings.
-function warn(msg) {
-  if (verbosity >= VerbosityLevel.WARNINGS) {
-    console.log('Warning: ' + msg);
-  }
-}
-
 function unreachable(msg) {
   throw new Error(msg);
 }
@@ -370,10 +343,12 @@ function createValidAbsoluteUrl(url, baseUrl) {
 }
 
 function shadow(obj, prop, value) {
-  Object.defineProperty(obj, prop, { value,
-                                     enumerable: true,
-                                     configurable: true,
-                                     writable: false, });
+  Object.defineProperty(obj, prop, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: false,
+  });
   return value;
 }
 
@@ -428,18 +403,18 @@ var MissingPDFException = (function MissingPDFExceptionClosure() {
 })();
 
 var UnexpectedResponseException =
-    (function UnexpectedResponseExceptionClosure() {
-  function UnexpectedResponseException(msg, status) {
-    this.name = 'UnexpectedResponseException';
-    this.message = msg;
-    this.status = status;
-  }
+  (function UnexpectedResponseExceptionClosure() {
+    function UnexpectedResponseException(msg, status) {
+      this.name = 'UnexpectedResponseException';
+      this.message = msg;
+      this.status = status;
+    }
 
-  UnexpectedResponseException.prototype = new Error();
-  UnexpectedResponseException.constructor = UnexpectedResponseException;
+    UnexpectedResponseException.prototype = new Error();
+    UnexpectedResponseException.constructor = UnexpectedResponseException;
 
-  return UnexpectedResponseException;
-})();
+    return UnexpectedResponseException;
+  })();
 
 /**
  * Error caused during parsing PDF data.
@@ -483,7 +458,7 @@ function removeNullCharacters(str) {
 
 function bytesToString(bytes) {
   assert(bytes !== null && typeof bytes === 'object' &&
-         bytes.length !== undefined, 'Invalid argument for bytesToString');
+    bytes.length !== undefined, 'Invalid argument for bytesToString');
   var length = bytes.length;
   var MAX_ARGUMENT_COUNT = 8192;
   if (length < MAX_ARGUMENT_COUNT) {
@@ -559,7 +534,7 @@ function arraysToBytes(arr) {
 
 function string32(value) {
   return String.fromCharCode((value >> 24) & 0xff, (value >> 16) & 0xff,
-                             (value >> 8) & 0xff, value & 0xff);
+    (value >> 8) & 0xff, value & 0xff);
 }
 
 // Calculate the base 2 logarithm of the number `x`. This differs from the
@@ -582,7 +557,7 @@ function readUint16(data, offset) {
 
 function readUint32(data, offset) {
   return ((data[offset] << 24) | (data[offset + 1] << 16) |
-         (data[offset + 2] << 8) | data[offset + 3]) >>> 0;
+    (data[offset + 2] << 8) | data[offset + 3]) >>> 0;
 }
 
 // Lazy test the endianness of the platform
@@ -605,7 +580,7 @@ function isEvalSupported() {
 }
 
 var Util = (function UtilClosure() {
-  function Util() {}
+  function Util() { }
 
   var rgbBuf = ['rgb(', 0, ',', 0, ',', 0, ')'];
 
@@ -649,22 +624,22 @@ var Util = (function UtilClosure() {
   Util.getAxialAlignedBoundingBox =
     function Util_getAxialAlignedBoundingBox(r, m) {
 
-    var p1 = Util.applyTransform(r, m);
-    var p2 = Util.applyTransform(r.slice(2, 4), m);
-    var p3 = Util.applyTransform([r[0], r[3]], m);
-    var p4 = Util.applyTransform([r[2], r[1]], m);
-    return [
-      Math.min(p1[0], p2[0], p3[0], p4[0]),
-      Math.min(p1[1], p2[1], p3[1], p4[1]),
-      Math.max(p1[0], p2[0], p3[0], p4[0]),
-      Math.max(p1[1], p2[1], p3[1], p4[1])
-    ];
-  };
+      var p1 = Util.applyTransform(r, m);
+      var p2 = Util.applyTransform(r.slice(2, 4), m);
+      var p3 = Util.applyTransform([r[0], r[3]], m);
+      var p4 = Util.applyTransform([r[2], r[1]], m);
+      return [
+        Math.min(p1[0], p2[0], p3[0], p4[0]),
+        Math.min(p1[1], p2[1], p3[1], p4[1]),
+        Math.max(p1[0], p2[0], p3[0], p4[0]),
+        Math.max(p1[1], p2[1], p3[1], p4[1])
+      ];
+    };
 
   Util.inverseTransform = function Util_inverseTransform(m) {
     var d = m[0] * m[3] - m[1] * m[2];
     return [m[3] / d, -m[1] / d, -m[2] / d, m[0] / d,
-      (m[2] * m[5] - m[4] * m[3]) / d, (m[4] * m[1] - m[5] * m[0]) / d];
+    (m[2] * m[5] - m[4] * m[3]) / d, (m[4] * m[1] - m[5] * m[0]) / d];
   };
 
   // Apply a generic 3d matrix M on a 3-vector v:
@@ -687,23 +662,23 @@ var Util = (function UtilClosure() {
   Util.singularValueDecompose2dScale =
     function Util_singularValueDecompose2dScale(m) {
 
-    var transpose = [m[0], m[2], m[1], m[3]];
+      var transpose = [m[0], m[2], m[1], m[3]];
 
-    // Multiply matrix m with its transpose.
-    var a = m[0] * transpose[0] + m[1] * transpose[2];
-    var b = m[0] * transpose[1] + m[1] * transpose[3];
-    var c = m[2] * transpose[0] + m[3] * transpose[2];
-    var d = m[2] * transpose[1] + m[3] * transpose[3];
+      // Multiply matrix m with its transpose.
+      var a = m[0] * transpose[0] + m[1] * transpose[2];
+      var b = m[0] * transpose[1] + m[1] * transpose[3];
+      var c = m[2] * transpose[0] + m[3] * transpose[2];
+      var d = m[2] * transpose[1] + m[3] * transpose[3];
 
-    // Solve the second degree polynomial to get roots.
-    var first = (a + d) / 2;
-    var second = Math.sqrt((a + d) * (a + d) - 4 * (a * d - c * b)) / 2;
-    var sx = first + second || 1;
-    var sy = first - second || 1;
+      // Solve the second degree polynomial to get roots.
+      var first = (a + d) / 2;
+      var second = Math.sqrt((a + d) * (a + d) - 4 * (a * d - c * b)) / 2;
+      var sx = first + second || 1;
+      var sy = first - second || 1;
 
-    // Scale values are the square roots of the eigenvalues.
-    return [Math.sqrt(sx), Math.sqrt(sy)];
-  };
+      // Scale values are the square roots of the eigenvalues.
+      return [Math.sqrt(sx), Math.sqrt(sy)];
+    };
 
   // Normalize rectangle rect=[x1, y1, x2, y2] so that (x1,y1) < (x2,y2)
   // For coordinate systems whose origin lies in the bottom-left, this
@@ -732,15 +707,15 @@ var Util = (function UtilClosure() {
 
     // Order points along the axes
     var orderedX = [rect1[0], rect1[2], rect2[0], rect2[2]].sort(compare),
-        orderedY = [rect1[1], rect1[3], rect2[1], rect2[3]].sort(compare),
-        result = [];
+      orderedY = [rect1[1], rect1[3], rect2[1], rect2[3]].sort(compare),
+      result = [];
 
     rect1 = Util.normalizeRect(rect1);
     rect2 = Util.normalizeRect(rect2);
 
     // X: first and second points belong to different rectangles?
     if ((orderedX[0] === rect1[0] && orderedX[1] === rect2[0]) ||
-        (orderedX[0] === rect2[0] && orderedX[1] === rect1[0])) {
+      (orderedX[0] === rect2[0] && orderedX[1] === rect1[0])) {
       // Intersection must be between second and third points
       result[0] = orderedX[1];
       result[2] = orderedX[2];
@@ -750,7 +725,7 @@ var Util = (function UtilClosure() {
 
     // Y: first and second points belong to different rectangles?
     if ((orderedY[0] === rect1[1] && orderedY[1] === rect2[1]) ||
-        (orderedY[0] === rect2[1] && orderedY[1] === rect1[1])) {
+      (orderedY[0] === rect2[1] && orderedY[1] === rect1[1])) {
       // Intersection must be between second and third points
       result[1] = orderedY[1];
       result[3] = orderedY[2];
@@ -828,7 +803,7 @@ function isArrayEqual(arr1, arr2) {
   if (arr1.length !== arr2.length) {
     return false;
   }
-  return arr1.every(function(element, index) {
+  return arr1.every(function (element, index) {
     return element === arr2[index];
   });
 }
@@ -863,12 +838,12 @@ function createPromiseCapability() {
       return isSettled;
     },
   });
-  capability.promise = new Promise(function(resolve, reject) {
-    capability.resolve = function(data) {
+  capability.promise = new Promise(function (resolve, reject) {
+    capability.resolve = function (data) {
       isSettled = true;
       resolve(data);
     };
-    capability.reject = function(reason) {
+    capability.reject = function (reason) {
       isSettled = true;
       reject(reason);
     };
@@ -905,7 +880,6 @@ export {
   FONT_IDENTITY_MATRIX,
   IDENTITY_MATRIX,
   OPS,
-  VerbosityLevel,
   UNSUPPORTED_FEATURES,
   AnnotationBorderStyleType,
   AnnotationFieldFlag,
@@ -933,8 +907,6 @@ export {
   bytesToString,
   createPromiseCapability,
   createObjectURL,
-  getVerbosityLevel,
-  info,
   isArrayBuffer,
   isArrayEqual,
   isBool,
@@ -953,13 +925,12 @@ export {
   removeNullCharacters,
   ReadableStream,
   URL,
-  setVerbosityLevel,
   shadow,
   string32,
   stringToBytes,
   stringToPDFString,
   stringToUTF8String,
   utf8StringToString,
-  warn,
   unreachable,
+  VerbosityLevel,
 };
