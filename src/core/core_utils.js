@@ -14,11 +14,12 @@
  */
 /* eslint no-var: error */
 
-import { assert, warn } from '../shared/util';
+import { toRomanNumerals } from '../wasm/pdfjs';
+import { warn } from '../shared/util';
 
 function getLookupTableFactory(initializer) {
   let lookup;
-  return function() {
+  return function () {
     if (initializer) {
       lookup = Object.create(null);
       initializer(lookup);
@@ -88,7 +89,7 @@ const XRefParseException = (function XRefParseExceptionClosure() {
  *   levels of the tree. The default value is `true`.
  */
 function getInheritableProperty({ dict, key, getArray = false,
-                                  stopWhenFound = true, }) {
+  stopWhenFound = true, }) {
   const LOOP_LIMIT = 100;
   let loopCount = 0;
   let values;
@@ -111,43 +112,6 @@ function getInheritableProperty({ dict, key, getArray = false,
     dict = dict.get('Parent');
   }
   return values;
-}
-
-const ROMAN_NUMBER_MAP = [
-  '', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
-  '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
-  '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
-];
-
-/**
- * Converts positive integers to (upper case) Roman numerals.
- * @param {integer} number - The number that should be converted.
- * @param {boolean} lowerCase - Indicates if the result should be converted
- *   to lower case letters. The default value is `false`.
- * @return {string} The resulting Roman number.
- */
-function toRomanNumerals(number, lowerCase = false) {
-  assert(Number.isInteger(number) && number > 0,
-         'The number should be a positive integer.');
-  let pos, romanBuf = [];
-  // Thousands
-  while (number >= 1000) {
-    number -= 1000;
-    romanBuf.push('M');
-  }
-  // Hundreds
-  pos = (number / 100) | 0;
-  number %= 100;
-  romanBuf.push(ROMAN_NUMBER_MAP[pos]);
-  // Tens
-  pos = (number / 10) | 0;
-  number %= 10;
-  romanBuf.push(ROMAN_NUMBER_MAP[10 + pos]);
-  // Ones
-  romanBuf.push(ROMAN_NUMBER_MAP[20 + number]);
-
-  const romanStr = romanBuf.join('');
-  return (lowerCase ? romanStr.toLowerCase() : romanStr);
 }
 
 export {

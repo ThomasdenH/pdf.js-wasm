@@ -1531,7 +1531,12 @@ const WASM_DEST_DIR = 'src/wasm';
 gulp.task('wasm', function (done) {
   safeSpawnSync(
     'wasm-pack',
-    ['build', '--out-dir', WASM_PACK_DEST, '--target', 'nodejs'],
+    [
+      'build',
+      '--out-dir', WASM_PACK_DEST,
+      '--target', 'nodejs',
+      '--features', 'wasm'
+    ],
     { stdio: 'inherit', }
   );
   inlineWasm();

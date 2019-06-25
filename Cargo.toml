@@ -8,9 +8,11 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [features]
+# Wasm enables compilation via wasm_bindgen
+wasm = []
 default = ["console_error_panic_hook"]
 
-[dependencies]
+[target.'cfg(feature = "wasm")'.dependencies]
 wasm-bindgen = "0.2"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
