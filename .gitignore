@@ -10,3 +10,4 @@ examples/node/pdf2png/*.png
 
 target
 pkg
+src/wasm
