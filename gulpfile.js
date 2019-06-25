@@ -548,7 +548,7 @@ gulp.task('default_preferences-pre', function () {
     .pipe(gulp.dest(DEFAULT_PREFERENCES_DIR + 'lib/'));
   return merge([
     buildLib,
-    gulp.src('external/{streams,url,fast-text-encoding}/*.js', { base: '.', })
+    gulp.src('external/{streams,url,fast-text-encoding,buffer}/*.js', { base: '.', })
       .pipe(gulp.dest(DEFAULT_PREFERENCES_DIR)),
   ]);
 });
@@ -1059,6 +1059,8 @@ gulp.task('lib', gulp.series('buildnumber', 'default_preferences', function () {
     gulp.src('external/url/url-lib.js', { base: '.', })
       .pipe(gulp.dest('build/')),
     gulp.src('external/fast-text-encoding/text.min.js', { base: '.', })
+      .pipe(gulp.dest('build/')),
+    gulp.src('external/buffer/index.js', { base: '.', })
       .pipe(gulp.dest('build/'))
   ]);
 }));
@@ -1563,6 +1565,12 @@ gulp.task('wasm', function (done) {
       replace(
         /const { TextDecoder } = .*\n/g,
         'require(\'../../external/fast-text-encoding/text.min.js\');\n'
+      )
+    )
+    .pipe(
+      replace(
+        /^/g,
+        'const Buffer = require(\'../../external/buffer/index.js\').Buffer;\n'
       )
     )
     .pipe(gulp.dest(WASM_DEST_DIR));
