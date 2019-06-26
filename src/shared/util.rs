@@ -65,7 +65,7 @@ mod wasm {
     }
 
     #[wasm_bindgen(js_name = isSpace)]
-    pub fn is_space(ch: char) -> bool {
-        super::is_space(ch)
+    pub fn is_space(ch: u8) -> bool {
+        super::is_space(ch.into())
     }
 }
