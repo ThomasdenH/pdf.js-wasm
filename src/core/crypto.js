@@ -18,6 +18,7 @@ import {
   stringToBytes, unreachable, utf8StringToString, warn
 } from '../shared/util';
 import { isDict, isName, Name } from './primitives';
+import { ArcFourCipher as ARCFourCipher } from '../wasm/pdfjs';
 import { DecryptStream } from './stream';
 
 var calculateMD5 = (function calculateMD5Closure() {

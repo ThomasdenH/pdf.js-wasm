@@ -11,15 +11,9 @@ pub struct ArcFourCipher {
     s: Vec<u8>,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl ArcFourCipher {
-    #[cfg(target_arch = "wasm32")]
-    #[wasm_bindgen(constructor)]
-    pub fn new_from_uint8_array(key: Uint8Array) -> ArcFourCipher {
-        let mut key_vec = Vec::with_capacity(key.length());
-        key.copy_to(&mut key_vec);
-        ArcFourCipher::new(&key_vec)
-    }
-
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(constructor))]
     pub fn new(key: &[u8]) -> ArcFourCipher {
         let a = 0u8;
         let b = 0u8;
