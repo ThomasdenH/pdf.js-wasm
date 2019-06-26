@@ -21,16 +21,21 @@ pub fn verbosity_level() -> VerbosityLevel {
     *VERBOSITY_LEVEL.lock().unwrap()
 }
 
-// A notice for devs. These are good for things that are helpful to devs, such
-// as warning that Workers were disabled, which is important to devs but not
-// end users.
+/// A notice for devs. These are good for things that are helpful to devs, such
+/// as warning that Workers were disabled, which is important to devs but not
+/// end users.
 pub fn info(msg: &str) {
     println!("Info: {}", msg);
 }
 
-// Non-fatal warnings.
+/// Non-fatal warnings.
 pub fn warn(msg: &str) {
     println!("Warning: {}", msg);
+}
+
+/// Checks if ch is one of the following characters: SPACE, TAB, CR or LF.
+pub fn is_space(ch: char) -> bool {
+    ch == 0x20.into() || ch == 0x09.into() || ch == 0x0D.into() || ch == 0x0A.into()
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -57,5 +62,10 @@ mod wasm {
     #[wasm_bindgen]
     pub fn info(msg: &str) {
         super::info(msg)
+    }
+
+    #[wasm_bindgen(js_name = isSpace)]
+    pub fn is_space(ch: char) -> bool {
+        super::is_space(ch)
     }
 }

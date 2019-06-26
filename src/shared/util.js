@@ -18,7 +18,8 @@ import {
   getVerbosityLevel,
   info,
   setVerbosityLevel,
-  warn
+  warn,
+  isSpace
 } from '../wasm/pdfjs';
 import { ReadableStream } from './streams_polyfill';
 import { URL } from './url_polyfill';
@@ -811,11 +812,6 @@ function isArrayEqual(arr1, arr2) {
   return arr1.every(function (element, index) {
     return element === arr2[index];
   });
-}
-
-// Checks if ch is one of the following characters: SPACE, TAB, CR or LF.
-function isSpace(ch) {
-  return (ch === 0x20 || ch === 0x09 || ch === 0x0D || ch === 0x0A);
 }
 
 /**
