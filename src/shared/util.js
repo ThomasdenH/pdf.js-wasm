@@ -17,9 +17,10 @@ import './compatibility';
 import {
   getVerbosityLevel,
   info,
+  isSpace,
   setVerbosityLevel,
-  warn,
-  isSpace
+  stringToBytes,
+  warn
 } from '../wasm/pdfjs';
 import { ReadableStream } from './streams_polyfill';
 import { URL } from './url_polyfill';
@@ -477,16 +478,6 @@ function bytesToString(bytes) {
     strBuf.push(String.fromCharCode.apply(null, chunk));
   }
   return strBuf.join('');
-}
-
-function stringToBytes(str) {
-  assert(typeof str === 'string', 'Invalid argument for stringToBytes');
-  var length = str.length;
-  var bytes = new Uint8Array(length);
-  for (var i = 0; i < length; ++i) {
-    bytes[i] = str.charCodeAt(i) & 0xFF;
-  }
-  return bytes;
 }
 
 /**

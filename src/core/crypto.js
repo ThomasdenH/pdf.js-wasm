@@ -1371,7 +1371,6 @@ var CipherTransformFactory = (function CipherTransformFactoryClosure() {
     while (i < 32) {
       hashData[i++] = defaultPasswordBytes[j++];
     }
-    if (!(hashData instanceof Uint8Array)) throw new Error("What is this type?");
     var hash = calculateMD5(hashData, 0, i);
     var keyLengthInBytes = keyLength >> 3;
     if (revision >= 3) {
