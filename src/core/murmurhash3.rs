@@ -1,3 +1,8 @@
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::cast::JsCast;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
 use byteorder::{NativeEndian, ReadBytesExt};
 
 const SEED: u32 = 0xc3d2e1f0;
@@ -5,12 +10,14 @@ const SEED: u32 = 0xc3d2e1f0;
 const MASK_HIGH: u32 = 0xffff0000;
 const MASK_LOW: u32 = 0xffff;
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Eq, PartialEq, Clone, Hash, Debug)]
 pub struct MurmurHash3_64 {
     h1: u32,
     h2: u32,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl MurmurHash3_64 {
     pub fn new() -> Self {
         Self::new_from_seed(SEED)
@@ -20,11 +27,31 @@ impl MurmurHash3_64 {
         MurmurHash3_64 { h1: seed, h2: seed }
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(constructor))]
     pub fn new_with_maybe_seed(seed: Option<u32>) -> Self {
         Self::new_from_seed(seed.unwrap_or(SEED))
     }
 
-    pub fn update(&mut self, data_as_ref: impl AsRef<[u8]>) {
+    #[cfg(target_arch = "wasm32")]
+    #[wasm_bindgen(js_name = update)]
+    pub fn update_wasm_bindgen(&mut self, input: JsValue) -> Result<(), JsValue> {
+        if let Some(s) = input.as_string() {
+            Ok(self.update(s))
+        } else if let Ok(array_buffer) = input.dyn_into::<js_sys::ArrayBuffer>() {
+            let bytes: Vec<u8> = (0..array_buffer.byte_length())
+                .map(|index| js_sys::Reflect::get_u32(&array_buffer, index))
+                .collect();
+
+            Ok(self.update(bytes))
+        } else {
+            Err(js_sys::Error::new(
+                "Wrong data format in MurmurHash3_64_update. Input must be a string or array.",
+            )
+            .into())
+        }
+    }
+
+    pub fn update<In: AsRef<[u8]>>(&mut self, data_as_ref: In) {
         let data = data_as_ref.as_ref();
         let block_counts = data.len() / 4;
         let tail_length = data.len() - block_counts * 4;
@@ -94,6 +121,7 @@ impl MurmurHash3_64 {
         self.h2 = h2;
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
     pub fn hexdigest(&mut self) -> String {
         let mut h1 = self.h1;
         let mut h2 = self.h2;
